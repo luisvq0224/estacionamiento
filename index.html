@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema académico de control de estacionamiento desarrollado con HTML, CSS y JavaScript.">
+  <title>ParkControl | Sistema de estacionamiento</title>
+  <link rel="stylesheet" href="estilos.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <!-- PUNTO 1: ENCABEZADO Y NAVEGACIÓN -->
+  <header class="cabecera">
+    <div class="contenedor cabecera__contenido">
+      <div>
+        <p class="marca">PARK<span>CONTROL</span> <span class="marca__tag">AULA</span></p>
+        <p class="cabecera__subtitulo">Gestión de ingresos, salidas y cobros</p>
+      </div>
+      <a class="enlace-cabecera" href="#registros">Ver registros <span aria-hidden="true">↓</span></a>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <!-- PUNTO 2: PANEL DE INDICADORES, CALCULADOS CON JS -->
+    <section aria-labelledby="titulo-panel" class="seccion panel">
+      <div class="seccion__encabezado">
+        <div>
+          <p class="eyebrow">PANEL OPERATIVO</p>
+          <h1 id="titulo-panel">Control de estacionamiento</h1>
+          <p class="texto-secundario">Registra vehículos, gestiona sus salidas y consulta el historial en tiempo real.</p>
+        </div>
+        <span class="estado"><span class="estado__punto"></span> Datos guardados en este navegador</span>
+      </div>
+      <div class="indicadores" aria-live="polite">
+        <article class="indicador"><span>Vehículos dentro</span><strong id="kpiOcupados">0</strong><small id="ocupacionTexto">0 de 20 espacios</small></article>
+        <article class="indicador"><span>Espacios disponibles</span><strong id="kpiLibres">20</strong><small>Capacidad total: <span id="kpiCapacidad">20</span></small></article>
+        <article class="indicador"><span>Ingresos cobrados</span><strong id="kpiRecaudacion">S/ 0.00</strong><small>Historial de salidas</small></article>
+        <article class="indicador"><span>Salidas registradas</span><strong id="kpiSalidas">0</strong><small>Operaciones finalizadas</small></article>
+      </div>
+      <div class="barra-ocupacion" role="progressbar" aria-label="Ocupación del estacionamiento" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" id="barraProgreso" ><div id="barraProgresoRelleno"></div></div>
+    </section>
+
+    <div class="columnas">
+      <!-- PUNTO 3: FORMULARIO DE REGISTRO Y VALIDACIONES -->
+      <section class="seccion tarjeta registro" aria-labelledby="titulo-registro">
+        <div class="tarjeta__encabezado"><div><p class="eyebrow">NUEVA OPERACIÓN</p><h2 id="titulo-registro">Registrar ingreso</h2></div><span class="etiqueta">01</span></div>
+        <form id="formIngreso" novalidate>
+          <div class="campo">
+            <label for="placa">Placa del vehículo *</label>
+            <input id="placa" name="placa" type="text" maxlength="9" placeholder="Ej.: ABC-123" autocomplete="off" required aria-describedby="ayudaPlaca">
+            <small id="ayudaPlaca">Entre 5 y 9 caracteres: letras, números o guion.</small>
+          </div>
+          <div class="fila-formulario">
+            <div class="campo"><label for="tipo">Tipo de vehículo *</label><select id="tipo" name="tipo" required><option value="">Seleccione</option><option value="auto">Auto</option><option value="moto">Moto</option><option value="camioneta">Camioneta</option></select></div>
+            <div class="campo"><label for="fechaIngreso">Fecha y hora de ingreso *</label><input id="fechaIngreso" name="fechaIngreso" type="datetime-local" required><small>Para practicar, usa una hora anterior.</small></div>
+          </div>
+          <div class="campo"><label for="conductor">Nombre del conductor (opcional)</label><input id="conductor" name="conductor" type="text" maxlength="60" placeholder="Ej.: Rosa Mendoza" autocomplete="name"></div>
+          <label class="checkbox"><input id="frecuente" name="frecuente" type="checkbox"><span>Cliente frecuente <strong>(15 % de descuento)</strong></span></label>
+          <div id="mensajeFormulario" class="mensaje" role="status" aria-live="polite" hidden></div>
+          <button class="boton boton--primario" type="submit">+ Registrar ingreso</button>
+        </form>
+      </section>
+
+      <!-- PUNTO 4: TARIFARIO Y REGLAS DEL NEGOCIO -->
+      <aside class="seccion tarjeta tarifas" aria-labelledby="titulo-tarifas">
+        <div class="tarjeta__encabezado"><div><p class="eyebrow">REGLAS DE NEGOCIO</p><h2 id="titulo-tarifas">Tarifario vigente</h2></div><span class="etiqueta">02</span></div>
+        <div class="tarifa"><div><span class="tarifa__icono">A</span><strong>Auto</strong></div><strong>S/ 5.00 <small>/ h</small></strong></div>
+        <div class="tarifa"><div><span class="tarifa__icono">M</span><strong>Moto</strong></div><strong>S/ 3.00 <small>/ h</small></strong></div>
+        <div class="tarifa"><div><span class="tarifa__icono">C</span><strong>Camioneta</strong></div><strong>S/ 7.00 <small>/ h</small></strong></div>
+        <div class="nota"><strong>¿Cómo se cobra?</strong><p>Se factura cada hora iniciada, con un mínimo de 1 hora. Los clientes frecuentes reciben 15 % de descuento. La salida utiliza la hora actual del equipo.</p></div>
+        <div class="nota nota--clara"><strong>Ejemplo</strong><p>Moto: 1 h 20 min → 2 horas × S/ 3.00 = S/ 6.00. Cliente frecuente → <strong>S/ 5.10</strong>.</p></div>
+      </aside>
+    </div>
+
+    <!-- PUNTO 5: TABLA DE VEHÍCULOS ACTIVOS Y BÚSQUEDA -->
+    <section id="registros" class="seccion tarjeta" aria-labelledby="titulo-activos">
+      <div class="tarjeta__encabezado tarjeta__encabezado--adaptable"><div><p class="eyebrow">CONTROL EN TIEMPO REAL</p><h2 id="titulo-activos">Vehículos estacionados <span class="contador" id="contadorActivos">0</span></h2></div><div class="busqueda"><label class="sr-only" for="buscarActivos">Buscar placa o conductor</label><input id="buscarActivos" type="search" placeholder="Buscar placa o conductor..."></div></div>
+      <div class="tabla-responsive"><table><thead><tr><th>Placa</th><th>Vehículo</th><th>Conductor</th><th>Ingreso</th><th>Cliente</th><th>Acción</th></tr></thead><tbody id="tablaActivos"></tbody></table></div>
+      <p class="vacio" id="vacioActivos" hidden>No hay vehículos que coincidan con la búsqueda.</p>
+    </section>
+
+   <!-- PUNTO 6: HISTORIAL DE SALIDAS Y EXPORTACIÓN CSV -->
+    <section class="seccion tarjeta" aria-labelledby="titulo-historial">
+      <div class="tarjeta__encabezado tarjeta__encabezado--adaptable"><div><p class="eyebrow">AUDITORÍA BÁSICA</p><h2 id="titulo-historial">Historial de salidas</h2></div><div class="acciones"><button id="btnExportar" class="boton boton--secundario" type="button">Exportar CSV</button><button id="btnLimpiarHistorial" class="boton boton--peligro" type="button">Limpiar historial</button></div></div>
+      <div class="tabla-responsive"><table><thead><tr><th>Placa</th><th>Vehículo</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Descuento</th><th>Total</th><th>Pago</th></tr></thead><tbody id="tablaHistorial"></tbody></table></div>
+      <p class="vacio" id="vacioHistorial" hidden>Aún no hay operaciones finalizadas.</p>
+    </section>
+
+    <!-- IMAGEN DE ESTACIONAMIENTO -->
+    <section class="seccion tarjeta" aria-labelledby="titulo-mapa">
+      <div class="tarjeta__encabezado"><div><p class="eyebrow">UBICACIÓN</p><h2 id="titulo-mapa">Red de estacionamientos</h2></div></div>
+      <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Map_Lima_District.png/960px-Map_Lima_District.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnai" alt="mapa de estacionamiento" style="width: 100%; height: 350px; object-fit: cover; border-radius: 8px; display: block;">
+    </section>
+
+    <p class="pie-informativo">Proyecto académico. Los datos se guardan solo en <code>localStorage</code> del navegador; no hay base de datos ni servidor de pagos. No utilices información sensible real.</p>
+  </main>
+
+  <!-- PUNTO 7: VENTANA MODAL PARA CONFIRMAR LA SALIDA Y COBRO -->
+  <dialog id="modalSalida" class="modal" aria-labelledby="tituloModal">
+    <form id="formSalida" method="dialog">
+      <div class="modal__cabecera"><div><p class="eyebrow">CIERRE DE OPERACIÓN</p><h2 id="tituloModal">Registrar salida</h2></div><button type="button" id="btnCerrarModal" class="cerrar" aria-label="Cerrar ventana">×</button></div>
+      <p id="descripcionModal" class="texto-secundario"></p>
+      <dl class="resumen-cobro"><div><dt>Tiempo transcurrido</dt><dd id="cobroDuracion"></dd></div><div><dt>Horas facturables</dt><dd id="cobroHoras"></dd></div><div><dt>Subtotal</dt><dd id="cobroSubtotal"></dd></div><div><dt>Descuento</dt><dd id="cobroDescuento"></dd></div><div class="resumen-cobro__total"><dt>Total a cobrar</dt><dd id="cobroTotal"></dd></div></dl>
+      <div class="campo"><label for="metodoPago">Método de pago *</label><select id="metodoPago" required><option value="">Seleccionar</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="yape">Yape</option><option value="plin">Plin</option></select></div>
+      <div class="modal__acciones"><button type="button" class="boton boton--secundario" id="btnCancelarSalida">Cancelar</button><button class="boton boton--primario" type="submit">Confirmar cobro y salida</button></div>
+    </form>
+  </dialog>
+  <footer class="footer"><div class="contenedor">ParkControl · Práctica de JavaScript · HTML5 + CSS3 + JS</div></footer>
+
+</body>
+</html>
+
